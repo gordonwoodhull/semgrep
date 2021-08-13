@@ -80,4 +80,21 @@ and rule_id = {
 
 (*e: type [[Match_result.t]] *)
 
+let range pm =
+  let tok1, tok2 = pm.range_loc in
+  Range.range_of_token_locations tok1 tok2
+
+let uniq pms =
+  let eq = AST_utils.with_structural_equal equal in
+  let tbl = Hashtbl.create 1_024 in
+  pms
+  |> List.iter (fun pm ->
+         let r = range pm in
+         let ys = Hashtbl.find_all tbl r in
+         match List.find_opt (fun y -> eq pm y) ys with
+         | Some _ -> ()
+         | None -> Hashtbl.add tbl r pm);
+  tbl |> Hashtbl.to_seq_values |> List.of_seq
+  [@@profiling]
+
 (*e: semgrep/core/Pattern_match.ml *)
